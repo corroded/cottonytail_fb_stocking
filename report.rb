@@ -8,7 +8,7 @@ class Report
     album_id = params[:album_id]
     stocking_date = params['stocking_date']
     stocking_time = params['stocking_time']
-    buffer = params[:buffer]
+    buffer = params[:buffer] || 0
 
     deadline = Time.new(*stocking_date.split('-'), *stocking_time.split(':'), 00, '+08:00')
 
@@ -26,7 +26,7 @@ class Report
         if slots_string
           slots = slots_string[1].to_i
           puts "my slots #{slots}"
-          eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }.slice(0, slots)
+          eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }.slice(0, slots + buffer)
           names = eligible_comments.map { |x| [x['from']['name'], x['created_time']] }
         else
           eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }
