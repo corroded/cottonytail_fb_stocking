@@ -8,7 +8,7 @@ class Report
     album_id = params[:album_id]
     stocking_date = params['stocking_date']
     stocking_time = params['stocking_time']
-    buffer = params[:buffer] || 0
+    buffer = params[:buffer].to_i || 0
 
     deadline = Time.new(*stocking_date.split('-'), *stocking_time.split(':'), 00, '+08:00')
 
