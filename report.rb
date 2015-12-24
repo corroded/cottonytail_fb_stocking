@@ -15,9 +15,10 @@ class Report
     csv_string = CSV.generate do |csv|
       csv << ["Photo ID", "Name/Description", "Slots", "Names"]
 
-      graph.get_connections album_id, 'photos'
+      album = graph.get_connections album_id, 'photos'
       photo_ids = album.raw_response['data'].map { |x| x['id'] }
 
+      names = []
       photo_ids.each do |photo_id|
         photo = graph.get_object photo_id
 
@@ -26,19 +27,22 @@ class Report
           slots = slots_string[1].to_i
           puts "my slots #{slots}"
           eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }.slice(0, slots)
-          names = eligible_comments.map { |x| puts "#{x['from']['name']}: #{x['created_time']}"}
+          names = eligible_comments.map { |x| [x['from']['name'], x['created_time']] }
         else
           eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }
-          names = eligible_comments.map { |x| puts "#{x['from']['name']}: #{x['created_time']}"}
+          names = eligible_comments.map { |x| [x['from']['name'], x['created_time']] }
         end
+
+        names.each do |name_and_time|
+          csv << if name_and_time == names.first
+                   [photo_id, photo['name'], slots_string, name_and_time.first, name_and_time.last]
+                 else
+                   [nil, nil, nil, name_and_time.first, name_and_time.last]
+                 end
+        end
+
       end
 
-      # csv << [photo_id, photo['name'], slots_string, ]
-
     end
-  end
-
-  def connect_to_fb
-
   end
 end
