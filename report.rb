@@ -19,19 +19,21 @@ class Report
       photo_ids = album.raw_response['data'].map { |x| x['id'] }
 
       names = []
+      eligible_comments = []
       photo_ids.each do |photo_id|
         photo = graph.get_object photo_id
 
-        slots_string = /SLOTS: (\d+)/.match(photo['name'])
+        slots_string = /SLOTS: (\d+)/i.match(photo['name'])
+
+        eligible_comments = graph.get_connections photo_id, 'comments', limit: 300
+        eligible_comments.select! { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }
+
         if slots_string
           slots = slots_string[1].to_i
-          puts "my slots #{slots}"
-          eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }.slice(0, slots + buffer)
-          names = eligible_comments.map { |x| [x['from']['name'], x['created_time']] }
-        else
-          eligible_comments = photo['comments']['data'].select { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }
-          names = eligible_comments.map { |x| [x['from']['name'], x['created_time']] }
+          eligible_comments = eligible_comments.slice(0, slots + buffer)
         end
+
+        names = eligible_comments.map { |x| [x['from']['name'], x['created_time']] }
 
         names.each do |name_and_time|
           csv << if name_and_time == names.first
