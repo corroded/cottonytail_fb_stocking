@@ -26,7 +26,8 @@ class Report
         slots_string = /SLOTS: (\d+)/i.match(photo['name'])
 
         eligible_comments = graph.get_connections photo_id, 'comments', limit: 300
-        eligible_comments.select! { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq { |x| x['from']['name'] }
+        eligible_comments.select! { |x| Time.parse(x['created_time']) >= deadline && x['message'].match(/mine/i) }.uniq! { |x| x['from']['name'] }
+
 
         if slots_string
           slots = slots_string[1].to_i
